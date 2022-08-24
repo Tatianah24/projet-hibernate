@@ -1,10 +1,12 @@
 package com.example.springboot.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springboot.repository.MedecinRepository;
@@ -27,10 +30,22 @@ public class MedecinController {
 	private MedecinRepository medecinRepository;
 	
 	//get all medecin
-	@GetMapping("/get_all_medecin")
-	public List<Medecin> getAllMedecin(){
-		return this.medecinRepository.findAll();
-	}
+		 @GetMapping("/get_all_medecin")
+			public ResponseEntity<List<Medecin>> getAllMedecin(@RequestParam(required = false) String nom) {
+				try {
+					List<Medecin> med = new ArrayList<Medecin>();
+					if (nom == null)
+						medecinRepository.findAll().forEach(med::add);
+					else
+						medecinRepository.findByNomMedContaining(nom).forEach(med::add);
+					if (med.isEmpty()) {
+						return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+					}
+					return new ResponseEntity<>(med, HttpStatus.OK);
+				} catch (Exception e) {
+					return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+			}
 	
 	//get medecin by id
 	 @GetMapping("/get_medecin/{id}")

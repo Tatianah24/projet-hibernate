@@ -1,10 +1,12 @@
 package com.example.springboot.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springboot.exception.ResourceNotFoundException;
@@ -27,9 +30,21 @@ public class PatientController {
 	private PatientRepository patientRepository;
 	
 	//get all patient
-		@GetMapping("/get_all_patient")
-		public List<Patient> getAllPatient(){
-			return this.patientRepository.findAll();
+	 @GetMapping("/get_all_patient")
+		public ResponseEntity<List<Patient>> getAllPatient(@RequestParam(required = false) String query) {
+			try {
+				List<Patient> pat = new ArrayList<Patient>();
+				if (query == null)
+					patientRepository.findAll().forEach(pat::add);
+				else
+					patientRepository.findByNomPatContaining(query).forEach(pat::add);
+				if (pat.isEmpty()) {
+					return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+				}
+				return new ResponseEntity<>(pat, HttpStatus.OK);
+			} catch (Exception e) {
+				return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 		}
 		
 	//get patient by id
@@ -38,15 +53,6 @@ public class PatientController {
 		    throws ResourceNotFoundException {
 		    Patient pat = patientRepository.findById(codePat)
 		    .orElseThrow(() -> new ResourceNotFoundException("Patient not found for this id :: " + codePat));
-		        return ResponseEntity.ok().body(pat);
-		    }
-	
-	//recherche par nom ou code
-		 @GetMapping("/get_patient_nom/{nom}")
-		 public ResponseEntity<Patient> getPatientByName(@PathVariable(value = "nom") String nom)
-		    throws ResourceNotFoundException {
-		    Patient pat = patientRepository.findByNomPat(nom)
-		    .orElseThrow(() -> new ResourceNotFoundException("Patient not found for this nom :: " + nom));
 		        return ResponseEntity.ok().body(pat);
 		    }
 		 
